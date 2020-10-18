@@ -1,7 +1,7 @@
 ---
 title: "GroupProject"
-author: "Alexander Pracht"
-date: "10/16/2020"
+author: "Group 29"
+date: "10/18/2020"
 output: html_document
 ---
 ```{r, loadinglibs}
@@ -22,10 +22,10 @@ library(car)
 library(kableExtra)
 library(data.table)
 library(modelr)
-
+library(readr)
 ```
 
-# Exploratory Data Analysis (EDA)
+
 
 ## Loading Data
 
@@ -35,7 +35,12 @@ listings <- vroom::vroom("http://data.insideairbnb.com/china/hk/hong-kong/2020-0
   clean_names()
 ```
 
-## How many variables/columns? How many rows/observations?
+
+# Exploratory Data Analysis (EDA)
+
+## Looking at the raw values
+
+### How many variables/columns? How many rows/observations?
 
 We have 106 variables and 11,187 observations.
 
@@ -48,9 +53,32 @@ glimpse(listings)
 1. 
 
 ```{r}
-skim(listings)
+skim(listings)%>%
+  kable()%>%
+  kable_styling()
 ```
+
+
+
+
 ```{r}
-favstats(listings)
+intersting_data <- listings %>%
+  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, neighbourhood, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, city, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
+
+
+main_data <- intersting_data %>%
+  mutate(host_response_rate = parse_number(host_response_rate),
+         price = parse_number(price),
+         security_deposit = parse_number(security_deposit),
+         cleaning_fee = parse_number(cleaning_fee),
+         extra_people = parse_number(extra_people))%>%
+  filter(has_availability == TRUE, minimum_nights <= 4, maximum_nights >= 4)
+
+skim(main_data)
+```
+
+
+```{r}
+favstats(main_data)
 ```
 
