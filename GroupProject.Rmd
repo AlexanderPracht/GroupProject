@@ -23,6 +23,7 @@ library(kableExtra)
 library(data.table)
 library(modelr)
 library(readr)
+library(kableExtra)
 ```
 
 # Executive Summary 
@@ -281,14 +282,62 @@ ggpairs
 ggplot
 geom_boxplot
 
+### Host experience
+
 ```{r}
 skim(main_data4)
 
-ggplot(main_data4,
-      aes(price)) +
-      geom_density()
+kable(favstats(~host_since_calculated, data=main_data4))%>%
+  kable_styling()
+
+skim(main_data4$host_since_calculated)%>%
+  kable()%>%
+  kable_styling()
+
+ggplot(main_data4, aes(x=host_since_calculated)) +
+  geom_density(fill = "blue", alpha = 0.3) + 
+  labs(x = "Host Experience", y="Density", title= "Host Experience Density Plot", subtitle = "in days") +
+  theme_minimal()
 
 ```
+### Super Host 
+
+```{r}
+skim(main_data4$host_is_superhost)%>%
+  kable()%>%
+  kable_styling()
+
+main_data4 %>%
+  count(host_is_superhost)%>%
+  kable()%>%
+  kable_styling()
+
+ggplot(main_data4, aes(x = host_is_superhost)) +
+  geom_bar(width = 0.5, color = "blue", fill = "#77a5f0") +
+  labs(x = "Super Host", y="Density", title= "Distribution of Superhosts") +
+  theme_minimal() 
+
+```
+### 
+
+```{r}
+main_data4%>%
+  skim(number_of_reviews)%>%
+  kable()%>%
+  kable_styling()
+
+kable(favstats(~number_of_reviews, data=main_data4))%>%
+  kable_styling()
+
+main_data4%>%
+  ggplot(aes(x=number_of_reviews))+
+  geom_histogram(aes(x = number_of_reviews), color = "blue", fill = "#77a5f0") +
+  labs(x = "Number of Reviews", y="Count", title= "Total Number of Reviews") +
+  ggtitle("Total Number of Reviews") +
+  coord_cartesian(xlim = c(0, 220)) +
+  theme_minimal()
+```
+
 
 
 # Mapping
