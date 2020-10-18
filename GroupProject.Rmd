@@ -75,20 +75,15 @@ First, we must change the price variables (price, cleaning_fee, extra_people, an
 ## Data Wrangling 
 
 ```{r}
-
-
 main_data <- interesting_data %>%
   mutate(host_response_rate = parse_number(host_response_rate),
          price = parse_number(price),
          security_deposit = parse_number(security_deposit),
          cleaning_fee = parse_number(cleaning_fee),
          extra_people = parse_number(extra_people))%>%
-  filter(has_availability == TRUE, 
-         minimum_nights <= 4, 
+  filter(minimum_nights <= 4, 
          maximum_nights >= 4,
          price > 0, 
-         price < 832.90,
-         is.na(review_scores_rating)==FALSE,
          accommodates >= 2, 
          )
 
@@ -106,8 +101,6 @@ main_data <- interesting_data %>%
 #   )
 # ci_price
 # skim(main_data)
-
-
 
 ```
 
@@ -136,11 +129,11 @@ top6_prop_type <- main_data2 %>%
   group_by(property_type)%>%
   summarise(count =n())%>%
   arrange(desc(count))%>%
-  slice(1:6)
+  slice(1:7)
 
 main_data3 <- main_data2 %>%
   mutate(prop_type_simplified = case_when(
-    property_type %in% c("Apartment", "Condominium", "Hostel", "Serviced apartment", "Guesthouse", "House") ~ property_type, 
+    property_type %in% c("Apartment", "Condominium", "Hostel", "Serviced apartment", "Guesthouse", "House", "Hotel") ~ property_type, 
     TRUE ~ "Other"
   ))
 
@@ -150,16 +143,17 @@ top_neighbourhood_type <- main_data2 %>%
   summarise(count=n())%>%
   arrange(desc(count))
 
-# cheat <- main_data2 %>% 
-#   group_by(neighbourhood_cleansed) %>% 
-#   summarise(mean(price))
-
-# main_data3 <- main_data3 %>%
-#   mutate(neighbourhood_cleansed = case_when(
-#     neighbourhood_cleansed %in% c("Yau Tsim Mong", "Central & Western", "	
-# Wan Chai", "Kowloon City", "Islands", "Eastern") ~ neighbourhood_cleansed, 
-#     TRUE ~ "Other"
-#   ))
+# cheat <- main_data2 %>%
+#    group_by(neighbourhood_cleansed) %>%
+#    summarise(mean=mean(price)) %>% 
+#   arrange(desc(mean))
+# 
+#  main_data3 <- main_data3 %>%
+#    mutate(neighbourhood_cleansed = case_when(
+#      neighbourhood_cleansed %in% c("Yau Tsim Mong", "Central & Western", "
+#  Wan Chai", "Kowloon City", "Islands", "Eastern") ~ neighbourhood_cleansed,
+#      TRUE ~ "Other"
+#    ))
 
 ## Room type
 top4_room_type <- main_data2 %>%
@@ -169,7 +163,6 @@ top4_room_type <- main_data2 %>%
   slice(1:6)
 
 ## No adjustment needed because room_type only has 4 values
-
 
 ## bed_type
 top6_bed_type <- main_data2 %>%
@@ -211,18 +204,12 @@ top6_host_time_type <- main_data2 %>%
 # Factoring the categories
 
 main_data4 <- main_data3 %>%
-  mutate(neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels = c("Kowloon City", "Islands", "Central & Western", "Yau Tsim Mong", "Eastern", "Other")),
-         room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
+  mutate(room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
          cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")),
-        # neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels= c("Central & Western","Eastern","Islands","Kowloon City","Kwai Tsing","Kwun Tong","North","Sai Kung","Sha Tin","Sham Shui Po","Southern","Tai Po","Tsuen Wan","Tuen Mun","Wan Chai","Wong Tai Sin","Yau Tsim Mong","Yuen Long")),
         host_since_calculated = Sys.Date() - host_since)
 
-
 ```
-
-
-
 
 We will also convert the amenities variable to be a count of the number of amenities in a certain property, rather than comma separated values. 
 ```{r}
@@ -237,12 +224,12 @@ main_data4<- main_data4 %>%
 
 # vector for living quality
 
-Best <-c("Central & Western","Eastern","Islands")
-Better <-c("Kowloon City","Kwai Tsing","Kwun Tong")
-Good <-c("North","Sai Kung","Sha Tin")
-Standard <-c("Sham Shui Po","Southern","Tai Po")
-Worse <- c("Tsuen Wan","Tuen Mun","Wan Chai")
-Worst <- c("Wong Tai Sin","Yau Tsim Mong","Yuen Long")
+Best <-c("Central & Western","Kowloon City","Islands")
+Better <-c("Southern","Tsuen Wan","Wan Chai")
+Good <-c("Sai Kung", "Tai Po", "Tuen Mun")
+Standard <-c("Sham Shui Po","Kwai Tsing", "Kwun Tong")
+Worse <- c("Sha Tin", "Eastern","Yau Tsim Mong")
+Worst <- c("Yuen Long", "Wong Tai Sin","North")
 
 ```
 
@@ -530,7 +517,7 @@ Did not change much and We saw that vif is high
 ```{r}
 glimpse(main_data4)
 
-model9 <- lm(log(price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model9 <- lm(log(price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness  + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model9 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -553,7 +540,7 @@ autoplot(model9)
 ```{r}
 glimpse(main_data4)
 
-model10 <- lm(log(price_4_nights) ~ neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model10 <- lm(log(price_4_nights) ~ neighbourhood_simplified + is_location_exact + cancellation_policy +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
