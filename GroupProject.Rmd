@@ -1,0 +1,56 @@
+---
+title: "GroupProject"
+author: "Alexander Pracht"
+date: "10/16/2020"
+output: html_document
+---
+```{r, loadinglibs}
+library(vroom)
+library(dplyr)
+library(skimr)
+library(tidyverse)
+library(mosaic)
+library(janitor)
+library(skimr)
+library(broom)
+library(lubridate)
+library(GGally)
+library(leaflet)
+library(ggfortify)
+library(huxtable)
+library(car)
+library(kableExtra)
+library(data.table)
+library(modelr)
+
+```
+
+# Exploratory Data Analysis (EDA)
+
+## Loading Data
+
+First we are going to read the data directly from the URL:
+```{r}
+listings <- vroom::vroom("http://data.insideairbnb.com/china/hk/hong-kong/2020-06-15/data/listings.csv.gz", na=c("", "NA"))%>%
+  clean_names()
+```
+
+## How many variables/columns? How many rows/observations?
+
+We have 106 variables and 11,187 observations.
+
+```{r}
+glimpse(listings)
+```
+
+## Which variables are numbers?
+
+1. 
+
+```{r}
+skim(listings)
+```
+```{r}
+favstats(listings)
+```
+
