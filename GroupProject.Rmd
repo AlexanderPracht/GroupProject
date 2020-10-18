@@ -25,6 +25,7 @@ library(modelr)
 library(readr)
 ```
 
+# Executive Summary 
 
 
 ## Loading Data
@@ -58,17 +59,20 @@ skim(listings)%>%
   kable_styling()
 ```
 
+## Variable Selection 
 
 We selected the ones we found interesting:
 
 ```{r}
-interesting_data <- listings %>%
+interesting_data <- listings %>% 
   select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, amenities, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, last_review, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
 ```
 
 In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
 
-First, we must change the price variables (price, cleaning_fee, extra_people, and security_deposit) to numeric variables, as they are now characters. 
+First, we must change the price variables (price, cleaning_fee, extra_people, and security_deposit) to numeric variables, as they are now characters.
+
+## Data Wrangling 
 
 ```{r}
 
@@ -111,6 +115,8 @@ skim(main_data)
 
 DIVIDE THIS PART IN DIFFERNT CHUNKS
 
+## Handling NAs 
+
 ```{r}
 main_data %>% 
   select(price, cleaning_fee, extra_people, host_response_rate, security_deposit) %>% 
@@ -122,12 +128,10 @@ main_data %>%
 main_data2 <- main_data %>%
   mutate(cleaning_fee = replace_na(cleaning_fee, 0),
          security_deposit = replace_na(security_deposit, 0))
+```
 
 
-# Changing host_response_time to a factor variable 
-
-#To simplify the `property_type` variable into 5 categories, Mutate others to gather the other property type with small values
-
+```{r}
 top6_prop_type <- main_data2 %>%
   group_by(property_type)%>%
   summarise(count =n())%>%
@@ -199,9 +203,12 @@ top6_host_time_type <- main_data2 %>%
   slice(1:6)
 
 ### We only have 4 types of response time so we will keep it this way
+```
 
+## Factoring variables which have a natural order
+
+```{r}
 # Factoring the categories
-
 
 main_data4 <- main_data3 %>%
   mutate(neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels = c("Kowloon City", "Islands", "Central & Western", "Yau Tsim Mong", "Eastern", "Other")),
@@ -267,12 +274,13 @@ main_data4 <- main_data4%>%
   )
 ```
 
-
+## Computing summary statistics and visualizing the distribution of the variables of interest
 
 HERE WE WILL MAKE PLOTS FROM THE DATA
 ggpairs
 ggplot
 geom_boxplot
+
 ```{r}
 skim(main_data4)
 
