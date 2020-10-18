@@ -179,8 +179,7 @@ main_data4 <- main_data3 %>%
          room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
          cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")),
-         #prop_type_simplified = factor(prop_type_simplified, order = TRUE, levels = c(""))
-         )
+        host_since_calculated = Sys.Date() - host_since)
 
 
 ```
@@ -274,7 +273,7 @@ We want to determine if room_type is a significant predictor of the cost for 4 n
 ```{r}
 
 # ***** Fit linear regression models: criminals on 4 explanatory variables.
-model2 <- lm(log (price_4_nights) ~ prop_type_simplified + number_of_reviews + review_scores_rating + room_type, data= main_data4)
+model2 <- lm(log (price_4_nights) ~ prop_type_simplified +number_of_reviews +  review_scores_rating + room_type, data= main_data4)
 
 model2 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -292,12 +291,14 @@ room_typeHotel room does not seem to be significantly different from the baselin
 
 Now we will explore adding further variables. 
 
-### Model 3: Improving model
+### Model 3: Improving model with room info
 
-We start our own exploration now. We first wonder if we can improve model 2.
+We start our own exploration now. We first wonder if we can improve model 2. Number of reviews ltm makes it better
 
 ```{r}
-model3 <- lm(log (price_4_nights) ~ prop_type_simplified + review_scores_rating + room_type, data= main_data4)
+glimpse(main_data4)
+model3 <- lm(log (price_4_nights) ~  bathrooms + bedrooms + beds + 
+               accommodates + prop_type_simplified + number_of_reviews  +  number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 model3 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -321,9 +322,8 @@ After taking number_of_reviews away, we find that there is almost no change in a
 Now, let's take a look at the number of bathrooms, bedrooms, beds and the number of people they can accommodates. We want to know if they are significant in predicting price of 4 nights in Cape Town.
 
 ```{r}
-model4 <- lm(log (price_4_nights) ~ prop_type_simplified + 
-               review_scores_rating + room_type + bathrooms + bedrooms + beds + 
-               accommodates, data= main_data4)
+glimpse(main_data4)
+model4 <- lm(log (price_4_nights) ~  bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 model4 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -338,18 +338,21 @@ model4 %>%
 msummary(model4)
 car::vif(model4)
 autoplot(model4)
+
 ```
 
-Bathrooms, bedrooms, beds and accommodates are all significant predictors of the cost for 4 night as they all have T-statistics >2 and p-vale <0.05. That is to say, the more bathrooms/bedrooms/beds it has or the more people it can accommodates, the more expensive it is.
-
-However, as we mentioned above, the four variables mentioned above are highly correlated with correlation of around 0.7. Considering about collinearity, we can only keep one of those variables. Noticing that accommodates has the biggest T-statistics, we decide to keep it.
+bathroom, and bed took out didnt makes no differnce
+bedroom made it lower
+accommodates makes a differnce
 
 ### Model 5: Adding Host
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ```{r}
-model5 <- lm(log (price_4_nights) ~ prop_type_simplified + review_scores_rating + room_type + accommodates + ac, data= listings)
+#glimpse(main_data)
+
+model5 <- lm(log (price_4_nights) ~  host_response_time + host_response_rate + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model5 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -364,8 +367,52 @@ model5 %>%
 msummary(model5)
 car::vif(model5)
 autoplot(model5)
+
 ```
 
-As we supposed, A/C is a significant predictor of the cost for 4 night as it has T-statistics >2 and p-vale <0.05! As we predict, if there is air conditioning in the property, it will be more expensive to rent.
+### Model 6: Adding SUper Host
 
-Also, all variables' VIFs are smaller than 5, indicating that there is no collinearity. So we can accept A/C in our model.
+```{r}
+#glimpse(main_data)
+
+model6 <- lm(log (price_4_nights) ~  host_response_time + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+
+model6 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model6 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model6)
+car::vif(model6)
+autoplot(model6)
+
+```
+VIF!!!
+
+### Model 7: Adding 
+
+```{r}
+glimpse(main_data4)
+
+model7 <- lm(log (price_4_nights) ~  host_response_time + host_response_rate + host_is_superhost +  host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
+
+model7 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model7 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model7)
+car::vif(model7)
+autoplot(model7)
+
+```
