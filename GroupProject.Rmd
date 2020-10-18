@@ -31,7 +31,7 @@ library(readr)
 
 First we are going to read the data directly from the URL:
 ```{r}
-listings <- vroom::vroom("http://data.insideairbnb.com/china/hk/hong-kong/2020-06-15/data/listings.csv.gz", na=c("", "NA"))%>%
+listings <- vroom::vroom("http://data.insideairbnb.com/china/hk/hong-kong/2020-06-15/data/listings.csv.gz", na=c("", "NA", "N/A"))%>%
   clean_names()
 ```
 
@@ -63,7 +63,7 @@ We selected the ones we found interesting:
 
 ```{r}
 intersting_data <- listings %>%
-  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, city, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
+  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
 ```
 
 In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
@@ -91,11 +91,104 @@ main_data %>%
   kable()%>%
   kable_styling()
 
-# DO THIS LATER (FITLER OUT NAs) FOR ALL VARIABLES hh
+# Making values for security deposit and claening fee 0 if they are NA
 main_data2 <- main_data %>%
-  mutate(cleaning_fee = replace_na(cleaning_fee, 0))
+  mutate(cleaning_fee = replace_na(cleaning_fee, 0),
+         security_deposit = replace_na(security_deposit, 0))
 
 
-favstats(main_data)
+# Changing host_response_time to a factor variable 
+
+#To simplify the `property_type` variable into 5 categories, Mutate others to gather the other property type with small values
+
+top6_prop_type <- main_data2 %>%
+  group_by(property_type)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:6)
+
+main_data3 <- main_data2 %>%
+  mutate(prop_type = case_when(
+    property_type %in% top6_prop_type ~ property_type, 
+    TRUE ~ "Other"
+  ))
+
+## Neighborhood_cleansed
+top6_neighbourhood_type <- main_data2 %>%
+  group_by(neighbourhood_cleansed)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:6)
+
+main_data3 <- main_data3 %>%
+  mutate(neighbourhood_cleansed = case_when(
+    neighbourhood_cleansed %in% c("Yau Tsim Mong", "Central & Western", "	
+Wan Chai", "Kowloon City", "Islands", "Eastern") ~ neighbourhood_cleansed, 
+    TRUE ~ "Other"
+  ))
+
+## Room type
+top4_room_type <- main_data2 %>%
+  group_by(room_type)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:6)
+
+## No adjustment needed because room_type only has 4 values
+
+
+## bed_type
+top6_bed_type <- main_data2 %>%
+  group_by(bed_type)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:6)
+
+## we wont look into this variable as almost all observations are the same category
+
+## cancellation_policy
+top6_cancel_type <- main_data2 %>%
+  group_by(cancellation_policy)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:10)
+
+### we will make one bucket for all strict policies
+
+main_data3 <- main_data3 %>%
+  mutate(cancellation_policy = case_when(
+    cancellation_policy %in% c("strict_14_with_grace_period", "super_strict_60", "super_strict_30", "strict") ~ "strict", 
+    TRUE ~ cancellation_policy
+  ))
+
+## Host response time
+top6_host_time_type <- main_data2 %>%
+  group_by(host_response_time)%>%
+  summarise(count =n())%>%
+  arrange(desc(count))%>%
+  slice(1:6)
+
+### We only have 4 types of response time so we will keep it this way
+
+# Factoring the categories
+
+main_data4 <- main_data3 %>%
+  mutate(neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels = c("Kowloon City", "Islands", "Central & Western", "Yau Tsim Mong", "Eastern", "Other")),
+         room_type)
+
+## DELETE IN THE END ITS CHEEEEEAAAATING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# main_data4 <- main_data3 %>%
+#   group_by(neighbourhood_cleansed)%>%
+#   summarise(mean = mean(price))%>%
+#   arrange(desc(mean))
+  
+
+
+# main_data3 <- listings%>% 
+#   mutate(host_response_time = factor(host_response_time, 
+#   order = TRUE, levels = c("within an hour", "within a few hours", "within a day",
+#                            "a few days or more")))
+# 
+# favstats(main_data)
 ```
 
