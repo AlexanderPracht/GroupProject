@@ -82,7 +82,7 @@ main_data <- intersting_data %>%
 skim(main_data)
 ```
 
-
+DIVIDE THIS PART IN DIFFERNT CHUNKS
 
 ```{r}
 main_data %>% 
@@ -174,21 +174,63 @@ top6_host_time_type <- main_data2 %>%
 
 main_data4 <- main_data3 %>%
   mutate(neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels = c("Kowloon City", "Islands", "Central & Western", "Yau Tsim Mong", "Eastern", "Other")),
-         room_type)
-
-## DELETE IN THE END ITS CHEEEEEAAAATING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# main_data4 <- main_data3 %>%
-#   group_by(neighbourhood_cleansed)%>%
-#   summarise(mean = mean(price))%>%
-#   arrange(desc(mean))
-  
+         room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
+         host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
+         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")))
 
 
-# main_data3 <- listings%>% 
-#   mutate(host_response_time = factor(host_response_time, 
-#   order = TRUE, levels = c("within an hour", "within a few hours", "within a day",
-#                            "a few days or more")))
-# 
-# favstats(main_data)
 ```
 
+## Creating price_4_nights 
+
+```{r}
+main_data4 <- main_data4%>%
+  filter(guests_included<=2)%>% 
+  mutate(
+    extra_charge_pp= case_when(guests_included==2 ~ 0, guests_included ==1 ~ extra_people),
+    price_4_nights= price*4 + extra_charge_pp*4 + cleaning_fee
+  )
+```
+
+
+
+HERE WE WILL MAKE PLOTS FROM THE DATA
+ggpairs
+ggplot
+geom_boxplot
+```{r}
+
+```
+
+
+# Mapping
+
+```{r, mapping}
+leaflet(data = main_data4) %>% 
+  addProviderTiles("OpenStreetMap.Mapnik") %>% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   radius = 1, 
+                   fillColor = "blue", 
+                   fillOpacity = 0.4, 
+                   popup = ~listing_url,
+                   label = ~property_type)
+```
+
+# Regression Analysis 
+
+## Visualizing the distribution of price_4_nights
+```{r}
+#density plot price_4_nights
+ggplot(data=main_data4, aes(x=price_4_nights)) +
+  geom_density(fill = "blue", alpha = 0.3) +
+  labs(x="Price for Four Nights") +
+  theme_minimal()
+## This graph doesnt help us as we cant interpret it so we will try log...
+
+#density plot log
+ggplot(data=main_data4, aes(x=price_4_nights)) + 
+  scale_x_log10()+geom_density(fill = "blue", alpha = 0.3) + 
+  labs(x="log of Price for Four Nights") +
+  theme_minimal()
+```
