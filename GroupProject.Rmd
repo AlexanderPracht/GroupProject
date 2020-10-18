@@ -375,7 +375,7 @@ autoplot(model5)
 ```{r}
 #glimpse(main_data)
 
-model6 <- lm(log (price_4_nights) ~  host_response_time + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model6 <- lm(log (price_4_nights) ~  host_response_time + host_is_superhost + host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model6 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -394,12 +394,12 @@ autoplot(model6)
 ```
 VIF!!!
 
-### Model 7: Adding 
+### Model 7: Adding Neighbourhood
 
 ```{r}
 glimpse(main_data4)
 
-model7 <- lm(log (price_4_nights) ~  host_response_time + host_response_rate + host_is_superhost +  host_since_calculated + bedrooms + accommodates + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
+model7 <- lm(log (price_4_nights) ~  neighbourhood_cleansed + is_location_exact + cancellation_policy + host_response_time + host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model7 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -414,5 +414,51 @@ model7 %>%
 msummary(model7)
 car::vif(model7)
 autoplot(model7)
+
+```
+### Model 8: Adding Review Types
+
+```{r}
+glimpse(main_data4)
+
+model8 <- lm(log (price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication + review_scores_location + neighbourhood_cleansed + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+
+model8 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model8 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model8)
+car::vif(model8)
+autoplot(model8)
+
+```
+We saw that vif is high and took out review rate
+
+### Model 9: Adding Review Types
+
+```{r}
+glimpse(main_data4)
+
+model8 <- lm(log (price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication + review_scores_location + neighbourhood_cleansed + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+
+model8 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model8 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model8)
+car::vif(model8)
+autoplot(model8)
 
 ```
