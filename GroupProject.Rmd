@@ -63,7 +63,7 @@ We selected the ones we found interesting:
 
 ```{r}
 intersting_data <- listings %>%
-  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, neighbourhood, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, city, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
+  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, city, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
 ```
 
 In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
@@ -91,9 +91,9 @@ main_data %>%
   kable()%>%
   kable_styling()
 
-# DO THIS LATER (FITLER OUT NAs)
-#main_data2 <- main_data %>%
- # mutate(cleaning_fee = case_when(is.na(cleaning_fee) == TRUE ~ "0"))
+# DO THIS LATER (FITLER OUT NAs) FOR ALL VARIABLES hh
+main_data2 <- main_data %>%
+  mutate(cleaning_fee = replace_na(cleaning_fee, 0))
 
 
 favstats(main_data)
