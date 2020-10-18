@@ -207,8 +207,10 @@ top6_host_time_type <- main_data2 %>%
 main_data4 <- main_data3 %>%
   mutate(room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
-         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")),
-        host_since_calculated = Sys.Date() - host_since)
+         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")))
+
+main_data4 <- main_data4 %>% 
+  mutate(host_since_calculated = as.numeric(ymd("2020-10-19") - host_since)/365)
 
 ```
 
@@ -268,6 +270,14 @@ HERE WE WILL MAKE PLOTS FROM THE DATA
 ggpairs
 ggplot
 geom_boxplot
+```{r}
+main_data4%>%
+  select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, price_4_nights) %>% 
+  ggpairs(aes(alpha=0.4)) +
+  theme_minimal()
+
+skim(main_data4)
+```
 
 ### Host experience
 
@@ -566,7 +576,7 @@ Did not change much and We saw that vif is high
 ```{r}
 glimpse(main_data4)
 
-model9 <- lm(log(price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness  + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model9 <- lm(log(price_4_nights) ~ review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model9 %>% 
   broom::tidy(conf.int=TRUE)%>%
