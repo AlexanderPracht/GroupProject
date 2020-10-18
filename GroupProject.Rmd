@@ -88,20 +88,20 @@ main_data <- interesting_data %>%
          accommodates >= 2, 
          )
 
-ci_price <- main_data %>%
-  summarise( mean_price = mean(price, na.rm = TRUE),
-             sd_price = sd(price, na.rm = TRUE),
-             count = n(),
-
-             # get t-critical value with (n-1) degrees of freedom
-             t_critical = qt(0.999, count-1),
-             se = sd_price/sqrt(count),
-             margin_of_error = t_critical * se,
-             ci_low = mean_price - margin_of_error,
-             ci_high = mean_price + margin_of_error
-  )
-ci_price
-skim(main_data)
+# ci_price <- main_data %>%
+#   summarise( mean_price = mean(price, na.rm = TRUE),
+#              sd_price = sd(price, na.rm = TRUE),
+#              count = n(),
+# 
+#              # get t-critical value with (n-1) degrees of freedom
+#              t_critical = qt(0.999, count-1),
+#              se = sd_price/sqrt(count),
+#              margin_of_error = t_critical * se,
+#              ci_low = mean_price - margin_of_error,
+#              ci_high = mean_price + margin_of_error
+#   )
+# ci_price
+# skim(main_data)
 
 
 
@@ -320,7 +320,7 @@ Next, we fit a regression model with 3 explanatory variables: prop_type_simplifi
 
 # ***** Fit linear regression models: First, just the mean
 
-model0 <- lm((price_4_nights) ~ 1, data= main_data4)
+model0 <- lm(log(price_4_nights) ~ 1, data= main_data4)
 
 model0 %>% 
   broom::tidy(conf.int=TRUE)
@@ -329,7 +329,7 @@ model0 %>%
   broom::glance()
 
 # ***** Fit linear regression models: criminals on 3 explanatory variables.
-model1 <- lm(price_4_nights ~ prop_type_simplified + number_of_reviews + review_scores_rating, data= main_data4)
+model1 <- lm(log(price_4_nights) ~ prop_type_simplified + number_of_reviews + review_scores_rating, data= main_data4)
 
 model1 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -350,7 +350,7 @@ We want to determine if room_type is a significant predictor of the cost for 4 n
 ```{r}
 
 # ***** Fit linear regression models: criminals on 4 explanatory variables.
-model2 <- lm(price_4_nights ~ prop_type_simplified +number_of_reviews +  review_scores_rating + room_type, data= main_data4)
+model2 <- lm(log(price_4_nights) ~ prop_type_simplified +number_of_reviews +  review_scores_rating + room_type, data= main_data4)
 
 model2 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -374,7 +374,7 @@ We start our own exploration now. We first wonder if we can improve model 2. Num
 
 ```{r}
 glimpse(main_data4)
-model3 <- lm(price_4_nights ~  bathrooms + bedrooms + beds + total_amenities +
+model3 <- lm(log(price_4_nights) ~  bathrooms + bedrooms + beds + total_amenities +
                accommodates + prop_type_simplified + number_of_reviews  +  number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 model3 %>% 
@@ -400,7 +400,7 @@ Now, let's take a look at the number of bathrooms, bedrooms, beds and the number
 
 ```{r}
 glimpse(main_data4)
-model4 <- lm(price_4_nights ~  bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
+model4 <- lm(log(price_4_nights) ~  bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 model4 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -429,7 +429,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```{r}
 #glimpse(main_data)
 
-model5 <- lm(price_4_nights ~  host_response_time + host_response_rate + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model5 <- lm(log(price_4_nights) ~  host_response_time + host_response_rate + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model5 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -452,7 +452,7 @@ autoplot(model5)
 ```{r}
 #glimpse(main_data)
 
-model6 <- lm(price_4_nights ~  host_response_time + host_is_superhost + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model6 <- lm(log(price_4_nights) ~  host_response_time + host_is_superhost + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model6 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -476,7 +476,7 @@ VIF!!!
 ```{r}
 glimpse(main_data4)
 
-model7 <- lm(price_4_nights ~  neighbourhood_simplified + is_location_exact + host_response_time + host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model7 <- lm(log(price_4_nights) ~  neighbourhood_simplified + is_location_exact + host_response_time + host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model7 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -498,7 +498,7 @@ autoplot(model7)
 ```{r}
 glimpse(main_data4)
 
-model8 <- lm(price_4_nights ~  cancellation_policy + neighbourhood_simplified + is_location_exact + host_response_time + host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model8 <- lm(log(price_4_nights) ~  cancellation_policy + neighbourhood_simplified + is_location_exact + host_response_time + host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model8 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -522,7 +522,7 @@ Did not change much and We saw that vif is high
 ```{r}
 glimpse(main_data4)
 
-model9 <- lm(price_4_nights ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model9 <- lm(log(price_4_nights) ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model9 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -545,7 +545,7 @@ autoplot(model9)
 ```{r}
 glimpse(main_data4)
 
-model10 <- lm(price_4_nights ~ neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model10 <- lm(log(price_4_nights) ~ neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
