@@ -530,6 +530,8 @@ Did not change much and We saw that vif is high
 ```{r}
 glimpse(main_data4)
 
+model9 <- lm(price_4_nights ~  review_scores_accuracy + review_scores_cleanliness + review_scores_checkin + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+
 model9 %>% 
   broom::tidy(conf.int=TRUE)%>%
   kable()%>%
@@ -551,7 +553,7 @@ autoplot(model9)
 ```{r}
 glimpse(main_data4)
 
-model10 <- lm(price_4_nights ~  prop_type_simplified + review_scores_rating + room_type + accommodates + amenities + cancellation_policy + neighbourhood_simplified, data= main_data4)
+model10 <- lm(price_4_nights ~ neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
