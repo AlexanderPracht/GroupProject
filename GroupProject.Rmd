@@ -77,9 +77,11 @@ main_data <- intersting_data %>%
          security_deposit = parse_number(security_deposit),
          cleaning_fee = parse_number(cleaning_fee),
          extra_people = parse_number(extra_people))%>%
-  filter(has_availability == TRUE, minimum_nights <= 4, maximum_nights >= 4)
+  filter(has_availability == TRUE, minimum_nights <= 4, maximum_nights >= 4,
+         price > 0,
+         accommodates >= 2)
 
-skim(main_data)
+#skim(main_data)
 ```
 
 DIVIDE THIS PART IN DIFFERNT CHUNKS
@@ -108,8 +110,8 @@ top6_prop_type <- main_data2 %>%
   slice(1:6)
 
 main_data3 <- main_data2 %>%
-  mutate(prop_type = case_when(
-    property_type %in% top6_prop_type ~ property_type, 
+  mutate(prop_type_simplified = case_when(
+    property_type %in% c("Apartment", "Condominium", "Hostel", "Serviced apartment", "Guesthouse", "House") ~ property_type, 
     TRUE ~ "Other"
   ))
 
@@ -176,7 +178,9 @@ main_data4 <- main_data3 %>%
   mutate(neighbourhood_cleansed = factor(neighbourhood_cleansed, order = TRUE, levels = c("Kowloon City", "Islands", "Central & Western", "Yau Tsim Mong", "Eastern", "Other")),
          room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
-         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")))
+         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")),
+         #prop_type_simplified = factor(prop_type_simplified, order = TRUE, levels = c(""))
+         )
 
 
 ```
@@ -234,3 +238,134 @@ ggplot(data=main_data4, aes(x=price_4_nights)) +
   labs(x="log of Price for Four Nights") +
   theme_minimal()
 ```
+## Model 1: prop_type_simplified, number_of_reviews, review_scores_rating
+Next, we fit a regression model with 3 explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating.
+```{r, model1}
+
+# ***** Fit linear regression models: First, just the mean
+
+model0 <- lm((log(price_4_nights)) ~ 1, data= main_data4)
+
+model0 %>% 
+  broom::tidy(conf.int=TRUE)
+
+model0 %>% 
+  broom::glance()
+
+# ***** Fit linear regression models: criminals on 3 explanatory variables.
+model1 <- lm(log(price_4_nights) ~ prop_type_simplified + number_of_reviews + review_scores_rating, data= main_data4)
+
+model1 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model1 %>% 
+  broom::glance()%>%
+ kable()%>%
+  kable_styling()
+
+```
+
+
+###  Model 2: adding room_type 
+
+We want to determine if room_type is a significant predictor of the cost for 4 nights, given everything else in the model. 
+```{r}
+
+# ***** Fit linear regression models: criminals on 4 explanatory variables.
+model2 <- lm(log (price_4_nights) ~ prop_type_simplified + number_of_reviews + review_scores_rating + room_type, data= main_data4)
+
+model2 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+   kable()%>%
+  kable_styling()
+
+model2 %>% 
+  broom::glance()%>%
+   kable()%>%
+  kable_styling()
+```
+All else equal, room_typePrivate room and room_typeShared room are significant predictors of the cost for 4 night as it has T-statistics >XXXXX and p-value XXXXXXXXX. 
+
+room_typeHotel room does not seem to be significantly different from the baseline room_type variable ("Entire home/apt") as its |T statistic| < 2.
+
+Now we will explore adding further variables. 
+
+### Model 3: Improving model
+
+We start our own exploration now. We first wonder if we can improve model 2.
+
+```{r}
+model3 <- lm(log (price_4_nights) ~ prop_type_simplified + review_scores_rating + room_type, data= main_data4)
+
+model3 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model3 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model3)
+car::vif(model3)
+autoplot(model3)
+```
+
+After taking number_of_reviews away, we find that there is almost no change in adjusted R-squared. Also, there is no change in collinearity and significance after eliminating number_of_reviews. So, we can get rid of number_of_reviews in our model.
+
+### Model 4: Adding bathrooms, bedrooms, beds, accommodates
+
+Now, let's take a look at the number of bathrooms, bedrooms, beds and the number of people they can accommodates. We want to know if they are significant in predicting price of 4 nights in Cape Town.
+
+```{r}
+model4 <- lm(log (price_4_nights) ~ prop_type_simplified + 
+               review_scores_rating + room_type + bathrooms + bedrooms + beds + 
+               accommodates, data= main_data4)
+
+model4 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model4 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model4)
+car::vif(model4)
+autoplot(model4)
+```
+
+Bathrooms, bedrooms, beds and accommodates are all significant predictors of the cost for 4 night as they all have T-statistics >2 and p-vale <0.05. That is to say, the more bathrooms/bedrooms/beds it has or the more people it can accommodates, the more expensive it is.
+
+However, as we mentioned above, the four variables mentioned above are highly correlated with correlation of around 0.7. Considering about collinearity, we can only keep one of those variables. Noticing that accommodates has the biggest T-statistics, we decide to keep it.
+
+### Model 5: Adding Host
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+```{r}
+model5 <- lm(log (price_4_nights) ~ prop_type_simplified + review_scores_rating + room_type + accommodates + ac, data= listings)
+
+model5 %>% 
+  broom::tidy(conf.int=TRUE)%>%
+  kable()%>%
+  kable_styling()
+
+model5 %>% 
+  broom::glance()%>%
+  kable()%>%
+  kable_styling()
+
+msummary(model5)
+car::vif(model5)
+autoplot(model5)
+```
+
+As we supposed, A/C is a significant predictor of the cost for 4 night as it has T-statistics >2 and p-vale <0.05! As we predict, if there is air conditioning in the property, it will be more expensive to rent.
+
+Also, all variables' VIFs are smaller than 5, indicating that there is no collinearity. So we can accept A/C in our model.
