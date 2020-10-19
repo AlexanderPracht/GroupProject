@@ -331,17 +331,163 @@ favstats(~number_of_reviews, data= main_data4)
 favstats(~host_since_calculated, data= main_data4)
 ```
 
+## Visualizing the distribution of price_4_nights
+```{r}
+#density plot price_4_nights
+ggplot(data=main_data4, aes(x=price_4_nights)) +
+  geom_density(fill = "blue", alpha = 0.3) +
+  labs(x="Price for Four Nights", y="Denisty", title = "The price for 4 nights is heavily right skewed") +
+  theme_minimal()
 
-```{r, warning=FALSE}
+```
+This graph is heavily right skewed so we will try log(price_4_nights) next...
+
+```{r}
+#density plot log
+ggplot(data=main_data4, aes(x=price_4_nights)) + 
+  scale_x_log10()+geom_density(fill = "blue", alpha = 0.3) + 
+  labs(title = "The logarithm of the price for 4 nights is closer to a normal distribution...", x="Log of Price for Four Nights", y="Density") +
+  theme_minimal()
+```
+First we use boxplots to analyse variables contributing to the price of 4 nights.
+
+```{r, price_4_nights vs room_type, fig.width=12, fig.height= 8}
+ggplot(main_data4, aes(y= log(price_4_nights), x=room_type))+
+  geom_boxplot()+
+  coord_flip()+
+  labs(
+    title = "Mean Prices Change by Room Type",
+    subtitle = "Price for 4 nights vs Room Type",
+    x = "Room Type",
+    y = "log(Price for 4 nights)"
+  ) +
+  theme_minimal()
+```
+So we see that Private Room has the lowest median price, followed by Hotel Room and Entire Home/Apartment. Shared room seems to have a quite high median price for 4 nights. This seems odd. Let us dubble check:
+
+```{r, plot_avg_price_room_type}
+dubblecheck <- main_data4 %>%
+  group_by(room_type)%>%
+  summarise(median(price_4_nights),
+            mean(price_4_nights))
+
+dubblecheck
+```
+Indeed, the median price for shared apartments is the highest among all categories. The mean price however, is the 3rd largest.
+This means that there must be something in shared rooms that makes many shared rooms still more expensive.
+
+```{r, price_4_nights vs neighbourhood_simplified, fig3, fig.width=12, fig.height= 8}
+ggplot(main_data4, aes(y= log(price_4_nights), x=neighbourhood_simplified))+
+  geom_boxplot() +
+  coord_flip() +
+  labs(
+    title = "Different Zones seem to have an impact on the price",
+    subtitle = "Price for 4 nights vs Neighbourhood Zone",
+    x = "Neighbourhood Zone",
+    y = "log(Price for 4 nights)"
+  ) +
+  theme_minimal()
+```
+
+```{r, price_4_nights vs is_it_big, fig4, fig.width=12, fig.height= 8}
+ggplot(main_data4, aes(x= log(price_4_nights), y=is_it_big))+
+  geom_boxplot()+
+  labs(
+    title = "Airbnbs that are big tend to have higher prices",
+    subtitle= "Price for 4 nights for Airbnbs that say they are 'big' ",
+    y= "Airbnb is big?",
+    x="log(Price for 4 nights)"
+  )+
+  theme_minimal()
+```
+From the graph above we see that we should definitely consider the variable is_it_big...
+Now let us check for the variable super_host:
+
+```{r, price_4_nights vs host_is_superhost, fig5, fig.width=12, fig.height= 8}
+main_data4 %>% 
+  filter(!is.na(host_is_superhost)) %>% 
+  ggplot(aes(x= log(price_4_nights), y=host_is_superhost))+
+  geom_boxplot()+
+  labs(
+    title = "Super Host Variable shows a big impact on the price...",
+    subtitle= "Price for 4 nights for Airbnbs with superhosts compared to regular hosts",
+    y= "Host is superhost?",
+    x="log(Price for 4 nights)"
+  )+
+  theme_minimal()
+```
+Through our analysis, we have a good overview on the single variables that we have.
+Now we will create a correlation scatterplot to analyse how variables in the dataset correlate to each other.
+
+
+```{r, warning=FALSE, fig7,  fig.width=20, fig.height=20}
 main_data4%>%
-  select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, price_4_nights, room_type, prop_type_simplified) %>% 
+  mutate(log4 = log(price_4_nights))%>%
+  select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, host_listings_count, host_response_rate, number_of_reviews, number_of_reviews_ltm, price_4_nights) %>% 
   ggpairs(aes(alpha=0.4)) +
   theme_minimal()
 
-skim(main_data4)
 ```
+Overall we see two things:
+First, there are some correlations between price and our other numeric variables which help us modeling. It is important that they have strong coefficients to the price. Bedroom, Bathroom, Accomodates have all a correlation of greater than 10%.
+Secondly, we see that some of our variables are also correlated among each other. Therefore we must be very cautious when taking additional variables into our model, because they could also be too strong correlated, which is bad. For example we need to be cautious with Bedroom, Bathroom, Accomodates as they have correlations greater than 50%.
+
+Now we can create scatter plots to visualize the distribution between some numeric variables and price.
+
+### Reviews
+
+```{r, price_4_nights and number_of_reviews, fig8, fig.width=12, fig.height= 8}
+#Scatterplot of price_4_nights vs number of reviews
+ggplot(main_data4, aes(y= log(price_4_nights), x=number_of_reviews))+
+  geom_point(alpha=0.3)+
+  geom_smooth(method="lm")+
+  scale_x_log10()+
+labs(
+  title = "Prices decrease as number of reviews increases",
+  subtitle= "Price for 4 nights vs Number of Reviews",
+  x= "Number of Reviews",
+  y="log(Price for 4 nights)")
++theme_minimal()
+```
+Now that is definitely an interesting finding. Normally, one would expect that the more reviews a host has, the higher he can charge the price. However, that is not the case here.
+
+Let us check if the variable for "Last 12 Months" reviews shows the same...
+
+### Reviews Last 12 Months
+
+```{r, price_4_nights and number_of_reviews_ltm, fig9, fig.width=12, fig.height= 8}
+#Scatterplot of price_4_nights vs number of reviews
+ggplot(main_data4, aes(y= log(price_4_nights), x=number_of_reviews_ltm))+
+  geom_point(alpha=0.3)+
+  geom_smooth(method="lm")+
+  scale_x_log10()+
+labs(
+  title = "Prices decrease as number of Last 12 months reviews increases",
+  subtitle= "Price for 4 nights vs Number of Reviews",
+  x= "Number of Reviews",
+  y="log(Price for 4 nights)")+
+  theme_minimal()
+```
+Last 12 month shows a similar relationship. This will be interesting for modeling because it doesn't seem intuitive and maybe there is a different variable correlated to number of reviews that makes this observation possible. For example, maybe there were many new and highly priced apartments build in the last time, so that the apartments and hosts dont have many reviews. Then the above observation would just be an coincidence. 
+
+Now let us check for the experience that hosts have:
 
 ### Host experience
+
+```{r, price_4_nights vs Host Experience, fig10, fig.width=12, fig.height= 8}
+ggplot(main_data4, aes(y= log(price_4_nights), x=host_since_calculated))+
+  geom_point(alpha=0.3)+
+  geom_smooth(method='lm')+
+  labs(
+    title = "Host experience seems to be correlated with higher prices",
+    subtitle= "Price for 4 nights vs Host experience",
+    x= "Experience of Host (in Years)",
+    y="log(Price for 4 nights)"
+  )+
+  theme_minimal()
+```
+
+Seems like host experience is going to help us a lot later in modelling...
 
 ```{r}
 skim(main_data4)
@@ -416,21 +562,7 @@ leaflet(data = main_data4) %>%
 
 # Regression Analysis 
 
-## Visualizing the distribution of price_4_nights
-```{r}
-#density plot price_4_nights
-ggplot(data=main_data4, aes(x=price_4_nights)) +
-  geom_density(fill = "blue", alpha = 0.3) +
-  labs(x="Price for Four Nights") +
-  theme_minimal()
-## This graph doesnt help us as we cant interpret it so we will try log...
 
-#density plot log
-ggplot(data=main_data4, aes(x=price_4_nights)) + 
-  scale_x_log10()+geom_density(fill = "blue", alpha = 0.3) + 
-  labs(x="log of Price for Four Nights") +
-  theme_minimal()
-```
 ## Model 1: prop_type_simplified, number_of_reviews, review_scores_rating
 Next, we fit a regression model with 3 explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating.
 ```{r, model1}
