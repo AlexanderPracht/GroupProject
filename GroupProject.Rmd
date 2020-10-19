@@ -50,7 +50,7 @@ We have 106 variables and 11,187 observations.
 glimpse(listings)
 ```
 
-## Which variables are numbers?
+## Computing summary statistics of the variables of interest
 
 1. 
 
@@ -66,7 +66,49 @@ We selected the ones we found interesting:
 
 ```{r}
 interesting_data <- listings %>% 
-  select(c(1, 2, summary, space, description, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, amenities, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, last_review, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
+  select(id, 
+           listing_url, 
+           summary, 
+           space, 
+           description, 
+           host_since, 
+           host_response_time, 
+           host_response_rate, 
+           host_is_superhost, 
+           host_listings_count, 
+           host_has_profile_pic, 
+           host_identity_verified, 
+           neighbourhood_cleansed, 
+           latitude, longitude, 
+           is_location_exact, 
+           property_type, 
+           room_type, 
+           accommodates, 
+           bathrooms,
+           bedrooms, 
+           beds, 
+           bed_type, 
+           amenities, 
+           price, 
+           security_deposit, 
+           cleaning_fee, guests_included, 
+           extra_people, 
+           minimum_nights, 
+           maximum_nights, 
+           has_availability, 
+           number_of_reviews, 
+           number_of_reviews_ltm, 
+           last_review, 
+           review_scores_rating, 
+           review_scores_accuracy, 
+           review_scores_cleanliness, 
+           review_scores_checkin, 
+           review_scores_communication, 
+           review_scores_location, 
+           review_scores_value, 
+           instant_bookable, 
+           cancellation_policy, 
+           reviews_per_month)
 ```
 
 In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
@@ -81,13 +123,13 @@ main_data <- interesting_data %>%
          price = parse_number(price),
          security_deposit = parse_number(security_deposit),
          cleaning_fee = parse_number(cleaning_fee),
-         extra_people = parse_number(extra_people))%>%
-  filter(minimum_nights <= 4, 
+         extra_people = parse_number(extra_people),
+         has_summary = !is.na(summary))%>%
+  filter(minimum_nights <= 4,  
          maximum_nights >= 4,
          price > 0, 
          accommodates >= 2,
-         !is.na(summary),
-         !is.na(host_response_time)
+         !is.na(host_response_time) 
          )
 
 # ci_price <- main_data %>%
@@ -108,10 +150,6 @@ skim(main_data)
 
 ```
 
-
-
-DIVIDE THIS PART IN DIFFERNT CHUNKS
-
 ## Handling NAs 
 
 ```{r}
@@ -127,6 +165,7 @@ main_data2 <- main_data %>%
          security_deposit = replace_na(security_deposit, 0))
 ```
 
+## Filtering Variables and Creating Factor Levels
 
 ```{r}
 top6_prop_type <- main_data2 %>%
@@ -203,8 +242,6 @@ top6_host_time_type <- main_data2 %>%
 ### We only have 4 types of response time so we will keep it this way
 ```
 
-## Factoring variables which have a natural order
-
 ```{r}
 # Factoring the categories
 
@@ -279,12 +316,22 @@ main_data4 <- main_data4 %>%
   )
 ```
 
+
 ## Computing summary statistics and visualizing the distribution of the variables of interest
 
-HERE WE WILL MAKE PLOTS FROM THE DATA
-ggpairs
-ggplot
-geom_boxplot
+
+```{r, skim_data}
+skimr::skim(listings)
+#using favstats from the mosaic package to display summary stats for some variables of interest
+favstats(~bedrooms, data= main_data4)
+favstats(~bathrooms, data= main_data4)
+favstats(~beds, data= main_data4)
+favstats(~accommodates, data= main_data4)
+favstats(~number_of_reviews, data= main_data4)
+favstats(~host_since_calculated, data= main_data4)
+```
+
+
 ```{r, warning=FALSE}
 main_data4%>%
   select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, price_4_nights, room_type, prop_type_simplified) %>% 
@@ -610,12 +657,15 @@ autoplot(model9)
 
 ```
 
-### Model 10: Adding space
+### Model 10: Adding space and latitude
+took out host since calculated
+number of amenities is important
+latitude is important
 
 ```{r}
 
 
-model10 <- lm(log(price_4_nights) ~  is_it_big  + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + log(number_of_reviews) + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model10 <- lm(log(price_4_nights) ~  is_it_big  + latitude + neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + log(number_of_reviews) + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
@@ -631,4 +681,44 @@ msummary(model10)
 car::vif(model10)
 autoplot(model10)
 
+```
+
+```{r}
+##summarize these models
+huxreg(model6, model7, model8, model9, model10)
+```
+
+
+```{r}
+#residuals check
+autoplot(model10)
+##check for collinearity
+car::vif(model10) 
+##renaming the final model
+final_model <- model10
+## summarize final model 
+msummary(final_model)
+confint(final_model)
+```
+
+
+```{r}
+## Using our model to predict price 
+predictors <- data.frame(is_it_big = TRUE,
+                         latitude=,
+                         neighbourhood_simplified=,
+                         is_location_exact=,
+                         cancellation_policy=
+                         host_response_time
+                         prop_type_simplified = "Apartment",
+                         number_of_reviews = 10,
+                         review_scores_rating = 90,
+                         room_type = "Private room",
+                         host_is_superhost = TRUE,
+                         accommodates = 1,
+                         bedrooms = 1,
+                         latitude = 1.35,
+                         security_deposit = 93) 
+                
+is_it_big  + latitude + neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + log(number_of_reviews) + number_of_reviews_ltm + review_scores_rating + room_type 
 ```
