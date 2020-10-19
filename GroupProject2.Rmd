@@ -284,7 +284,7 @@ main_data3 <- main_data3 %>%
 top6_host_time_type <- main_data2 %>%
   group_by(host_response_time)%>%
   summarise(count =n())%>%
-  arrange(desc(count))%>%
+  arrange(desc(count))
 
 # We only have 4 types of response time so we will keep it this way
 ```
@@ -511,8 +511,8 @@ labs(
   title = "Prices decrease as number of reviews increases",
   subtitle= "Price for 4 nights vs Number of Reviews",
   x= "Number of Reviews",
-  y="log(Price for 4 nights)")
-+theme_minimal()
+  y="log(Price for 4 nights)") +
+ theme_minimal()
 ```
 Now that is definitely an interesting finding. Normally, one would expect that the more reviews a host has, the higher he can charge the price. However, that is not the case here.
 
@@ -591,9 +591,7 @@ ggplot(data=main_data4, aes(x=price_4_nights)) +
 
 In our first model we will run a regression with `prop_type_simplified`,`number_of_reviews` and `review_scores_rating`as the explanatory variables. 
 
-## Model 1: prop_type_simplified, number_of_reviews, review_scores_rating
-Next, we fit a regression model with 3 explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating.
->>>>>>> 69b9154c58b0706ac03369163c6f4c48ff6263a6
+
 ```{r, model1}
 
 # ***** Fit linear regression models: First, just the mean
@@ -663,7 +661,7 @@ We start our own exploration now. We first wonder if we can improve model 2.
 In the visualisations above we saw that the variables `bedrooms`, `beds`, `bathrooms`, `total_amenities` and `accommodates` have a moderate correlation with price. This logically makes sense since larger Airbnbs tend to accomodate more guests and cost a higher price. We will look at the effect of these variables on our model. We also wanted to add the `number_of_reviews_ltm` instead of `number_of_reviews` since we realized that it improves R squared.
 
 ```{r}
-glimpse(main_data4)
+glimpse(main_data4) 
 model3 <- lm(log(price_4_nights) ~  bathrooms + bedrooms + beds + total_amenities +
                accommodates + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -692,7 +690,7 @@ Looking at the effects of the variables we have just added, we realised that eve
 After taking out the unnecessary variables, we observe that our R squared has not changed. 
 
 ```{r}
-glimpse(main_data4)
+glimpse(main_data4) 
 model4 <- lm(log(price_4_nights) ~  bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 
@@ -717,7 +715,7 @@ autoplot(model4)
 Next we would like to explore the effect of the variables about the host on price. We add `host_is_superhost`, `host_response_time`, `host_response_rate`, `host_has_profile_pic`, and `host_since_calculated` to the model. 
 
 ```{r}
-#glimpse(main_data)
+#glimpse(main_data) 
 
 model5 <- lm(log(price_4_nights) ~  host_response_time + host_response_rate + host_is_superhost + host_has_profile_pic + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -745,7 +743,7 @@ We observe that host response rate and time have high VIF numbers and `host_resp
 After taking out the unnecessary variables, we observe that our adjusted R squared has not changed. 
 
 ```{r}
-#glimpse(main_data)
+#glimpse(main_data) 
 
 model6 <- lm(log(price_4_nights) ~   host_response_time + host_is_superhost + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -772,7 +770,7 @@ We also check for collinearity at this point, and we observe that all the VIF va
 We believe that location is an important factor in Hong Kong listings. Thus, we would like to add related factors which are `neighbourhood_simplified` that shows which part of the city the listing is located, `is_location_exact` that shows if the location is shown exactly on the map, and `latitude`. We added latitude since as we have learned through interviewing our friends from Hong Kong that the prices in the city increase as we go closer to the coast.
 
 ```{r}
-glimpse(main_data4)
+glimpse(main_data4) 
 
 model7 <- lm(log(price_4_nights) ~  neighbourhood_simplified + is_location_exact + latitude + host_response_time + host_is_superhost + host_since_calculated + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -800,7 +798,7 @@ Next, we would like to see the impact of adding `cancellation_policy` and `secur
 
 ```{r}
 glimpse(main_data4)
-
+ 
 model8 <- lm(log(price_4_nights) ~  cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 
@@ -827,7 +825,7 @@ These new variables did not change our R Squared much, we observe that cancellat
 Lastly, we would like to try adding specific review scores to our model, although we know that they might be correlated.
 
 ```{r}
-glimpse(main_data4)
+glimpse(main_data4) 
 
 model9 <- lm(log(price_4_nights) ~ review_scores_rating +  review_scores_cleanliness + review_scores_checkin + review_scores_communication + review_scores_location + review_scores_value + cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -854,7 +852,7 @@ We take out the scores of accuracy, cleanliness, rating and checkin becase of th
 After we did our final adjustments, we get to the R squared of 38%. Although it is not a high rate, we can observe that our model does not suffer from collinearity and our variables are usually statistically significant with only a couple of them having larger than 5% p values. We decided to keep them since they are categorical and some of the other values in these variables have p values lower than 5%. 
 
 ```{r}
-
+ 
 model10 <- lm(log(price_4_nights) ~ review_scores_communication + review_scores_location + review_scores_value + cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
@@ -894,7 +892,7 @@ We developed 10 models to forecast the price of and Airbnb apartment in Hong Kon
 
 By brainstorming on the features we look at when booking an Airbnb, we added several explanatory variables, and increased the adjusted R squared to 38.7% in our latest model.
 
-```{r}
+```{r} 
 #residuals check
 autoplot(model10)
 ##check for collinearity
@@ -909,7 +907,7 @@ confint(final_model)
 To predict the price for two people staying 4 nights in Hong Kong, we need to first create a data frame that contains their preferences and then feed it into our model. We have chosen two tourists who want to stay in an apartment, that has 2 bedrooms, 20 amenities, and a strict cancellation policy. The apartment is in hong_kong area and has 10 reviews in last twelve months, a rating of 90 and accommodates 3 people.
 
 ```{r}
-
+ 
 ## Using our model to predict price 
 predictors <- data.frame(review_scores_communication = 8,
                          review_scores_location = 8,
