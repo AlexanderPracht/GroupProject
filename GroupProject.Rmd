@@ -226,6 +226,7 @@ skim(main_data)
 ## Handling NAs 
 
 ```{r}
+#Check NAs
 main_data %>% 
   select(price, cleaning_fee, extra_people, host_response_rate, security_deposit) %>% 
   skim()%>%
@@ -324,13 +325,15 @@ main_data4 <- main_data3 %>%
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more"))
   )
 
+#Creation of the new variable reflicting the number of years a host is being host
 main_data4 <- main_data4 %>% 
   mutate(host_since_calculated = as.numeric(ymd("2020-10-19") - host_since)/365)
 
 ```
 
-We will also convert the amenities variable to be a count of the number of amenities in a certain property, rather than comma separated values. 
+
 ```{r}
+# Convert the amenities variable to be a count of the number of amenities in a certain property, rather than comma separated values. 
 main_data4<- main_data4 %>% 
   mutate(total_amenities=str_count(amenities, ',')+1)
 ```
@@ -359,9 +362,10 @@ main_data4 <- main_data4 %>%
 
 ```
 
-Creating variable for the size of the apartment
+
 ```{r}
-#creating the A/C variable
+# Creating variable for the size of the apartment
+# Creating the A/C variable
 main_data4 <- main_data4 %>% 
   mutate(is_it_big_sum = str_detect(summary,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
           is_it_big_spa = str_detect(space,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
@@ -378,13 +382,16 @@ proportions%>%
   kable_styling()
 ```
 
+
 ## Creating price_4_nights 
 
 ```{r}
 main_data4 <- main_data4 %>%
   filter(guests_included<=2)%>% 
   mutate(
-    extra_charge_pp= case_when(guests_included==2 ~ 0, guests_included ==1 ~ extra_people),
+    #Extra charge is 0 if 2 guests are included, and extra_people otw
+    extra_charge_pp= case_when(guests_included==2 ~ 0, guests_included ==1 ~ extra_people), 
+    #Calculate the price for 4 nights for 2 people
     price_4_nights= price*4 + extra_charge_pp*4 + cleaning_fee
   )
 ```
