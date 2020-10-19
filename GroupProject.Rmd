@@ -101,7 +101,8 @@ main_data <- interesting_data %>%
 #              ci_high = mean_price + margin_of_error
 #   )
 # ci_price
-# skim(main_data)
+skim(interesting_data)
+skim(main_data)
 
 ```
 
@@ -186,7 +187,8 @@ top6_cancel_type <- main_data2 %>%
 main_data3 <- main_data3 %>%
   mutate(cancellation_policy = case_when(
     cancellation_policy %in% c("strict_14_with_grace_period", "super_strict_60", "super_strict_30", "strict") ~ "strict", 
-    TRUE ~ cancellation_policy
+    cancellation_policy %in% c("moderate") ~"moderate",
+    cancellation_policy %in% c("flexible") ~"flexible"
   ))
 
 ## Host response time
@@ -205,9 +207,10 @@ top6_host_time_type <- main_data2 %>%
 # Factoring the categories
 
 main_data4 <- main_data3 %>%
-  mutate(room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
-         host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more")),
-         cancellation_policy = factor(cancellation_policy, order = TRUE, levels = c("flexible", "moderate", "strict")))
+  mutate(
+    # room_type = factor(room_type, order = TRUE, levels = c("Entire home/apt", "Hotel room", "Private room", "Shared room")),
+         host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more"))
+  )
 
 main_data4 <- main_data4 %>% 
   mutate(host_since_calculated = as.numeric(ymd("2020-10-19") - host_since)/365)
@@ -270,9 +273,9 @@ HERE WE WILL MAKE PLOTS FROM THE DATA
 ggpairs
 ggplot
 geom_boxplot
-```{r}
+```{r, warning=FALSE}
 main_data4%>%
-  select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, price_4_nights) %>% 
+  select(bedrooms, bathrooms, accommodates, review_scores_rating, host_since_calculated, price_4_nights, room_type, prop_type_simplified) %>% 
   ggpairs(aes(alpha=0.4)) +
   theme_minimal()
 
@@ -313,7 +316,6 @@ ggplot(main_data4, aes(x = host_is_superhost)) +
   geom_bar(width = 0.5, color = "blue", fill = "#77a5f0") +
   labs(x = "Super Host", y="Density", title= "Distribution of Superhosts") +
   theme_minimal() 
-
 ```
 ### 
 
@@ -597,9 +599,9 @@ autoplot(model9)
 ### Model 10: ^^
 
 ```{r}
-glimpse(main_data4)
 
-model10 <- lm(log(price_4_nights) ~ neighbourhood_simplified + is_location_exact + cancellation_policy +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+
+model10 <- lm(log(price_4_nights) ~ review_scores_communication +  neighbourhood_simplified + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
