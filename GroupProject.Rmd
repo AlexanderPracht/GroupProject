@@ -205,20 +205,6 @@ main_data <- interesting_data %>%
          !is.na(host_response_time) 
          )
 
-# ci_price <- main_data %>%
-#   summarise( mean_price = mean(price, na.rm = TRUE),
-#              sd_price = sd(price, na.rm = TRUE),
-#              count = n(),
-# 
-#              # get t-critical value with (n-1) degrees of freedom
-#              t_critical = qt(0.999, count-1),
-#              se = sd_price/sqrt(count),
-#              margin_of_error = t_critical * se,
-#              ci_low = mean_price - margin_of_error,
-#              ci_high = mean_price + margin_of_error
-#   )
-# ci_price
-
 skim(main_data)
 
 ```
@@ -254,50 +240,38 @@ main_data3 <- main_data2 %>%
     TRUE ~ "Other"
   ))
 
-## Neighborhood_cleansed
+# Neighborhood_cleansed
 top_neighbourhood_type <- main_data2 %>%
   group_by(neighbourhood_cleansed)%>%
   summarise(count=n())%>%
   arrange(desc(count))
 
-# cheat <- main_data2 %>%
-#    group_by(neighbourhood_cleansed) %>%
-#    summarise(mean=mean(price)) %>% 
-#   arrange(desc(mean))
-# 
-#  main_data3 <- main_data3 %>%
-#    mutate(neighbourhood_cleansed = case_when(
-#      neighbourhood_cleansed %in% c("Yau Tsim Mong", "Central & Western", "
-#  Wan Chai", "Kowloon City", "Islands", "Eastern") ~ neighbourhood_cleansed,
-#      TRUE ~ "Other"
-#    ))
-
-## Room type
+# Room type
 top4_room_type <- main_data2 %>%
   group_by(room_type)%>%
   summarise(count =n())%>%
   arrange(desc(count))%>%
   slice(1:6)
 
-## No adjustment needed because room_type only has 4 values
+# No adjustment needed because room_type only has 4 values
 
-## bed_type
+# bed_type
 top6_bed_type <- main_data2 %>%
   group_by(bed_type)%>%
   summarise(count =n())%>%
   arrange(desc(count))%>%
   slice(1:6)
 
-## we wont look into this variable as almost all observations are the same category
+# we wont look into this variable as almost all observations are the same category
 
-## cancellation_policy
+# cancellation_policy
 top6_cancel_type <- main_data2 %>%
   group_by(cancellation_policy)%>%
   summarise(count =n())%>%
   arrange(desc(count))%>%
   slice(1:10)
 
-### we will make one bucket for all strict policies
+# we will make one bucket for all strict policies
 
 main_data3 <- main_data3 %>%
   mutate(cancellation_policy = case_when(
@@ -306,14 +280,13 @@ main_data3 <- main_data3 %>%
     cancellation_policy %in% c("flexible") ~"flexible"
   ))
 
-## Host response time
+# Check if number of levels is less than 6
 top6_host_time_type <- main_data2 %>%
   group_by(host_response_time)%>%
   summarise(count =n())%>%
   arrange(desc(count))%>%
-  slice(1:6)
 
-### We only have 4 types of response time so we will keep it this way
+# We only have 4 types of response time so we will keep it this way
 ```
 
 ```{r}
@@ -325,7 +298,7 @@ main_data4 <- main_data3 %>%
          host_response_time = factor(host_response_time, order = TRUE, levels = c("within an hour", "within a few hours", "within a day","a few days or more"))
   )
 
-#Creation of the new variable reflicting the number of years a host is being host
+#Creation of the new variable reflecting the number of years a host is being host
 main_data4 <- main_data4 %>% 
   mutate(host_since_calculated = as.numeric(ymd("2020-10-19") - host_since)/365)
 
@@ -365,14 +338,14 @@ main_data4 <- main_data4 %>%
 
 ```{r}
 # Creating variable for the size of the apartment
-# Creating the A/C variable
 main_data4 <- main_data4 %>% 
   mutate(is_it_big_sum = str_detect(summary,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
           is_it_big_spa = str_detect(space,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
           is_it_big_desc = str_detect(description,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
           is_it_big = is_it_big_sum | is_it_big_spa | is_it_big_desc
            )
-         
+
+# Check how many apartments are big         
 proportions<- main_data4 %>% 
   group_by(is_it_big) %>% 
   summarise(count=n()) %>% 
