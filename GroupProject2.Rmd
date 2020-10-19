@@ -1,10 +1,32 @@
 ---
-title: "GroupProject"
+title: "Predicting price of an AirBnB for 2 people staying 4 nights in Hong Kong"
 author: "Group 29"
-date: "10/18/2020"
+date: "10/19/2020"
 output: html_document
 ---
 # Executive Summary 
+
+The goal of this project is to predict the total cost for two people staying 4 nights in an AirBnB in Hong Kong. We downloaded the data from insideairbnb.com and followed the IICE method (import data, inspect data, clean data, explore data). 
+
+## Understanding the Data
+
+After importing the data, we looked at the data entries and variables in order to adapt them to our required format. We created factor variables and turned some character variables into numeric values. While skimming through the data, we discovered several anomalies inside the data such as really high outliers and NAs that were either removed or replaced. We did the following to clean the data:
+
+* Firstly, we selected only relevant columns to decrease the size of our dataframe and created our variable of interest price_4_nights which calculates the cost for two people staying in Hong Kong for 4 nights. Also, we removed the accommodations that have more less than two accommodates as two people will most likely not look for such Airbnbs. 
+
+* Secondly we clustered the type of accommodations, properties, beds, cancellation policies into the top most popular ones and “Other”.
+
+* Thirdly, we grouped the different areas into 3 zones of Hong Kong as we believe that certain districts will be more appealing for a tourist than others and could thus lead to higher Airbnb prices. 
+
+* Fourthly, preliminary regression analysis showed us that the neighbourhood, room type, and the number of bedrooms had the most significant effect on price.
+
+* Lastly, we both created new variables like total amenity number and looked at the cancellation policy and security deposit since they could have an impact on the price as well.  
+
+After having adapted the dataframe to our needs, we created several boxplots, scatterplots and correlation plots for our variables in order to look at their spread and the relationships among them. We also used ggpairs to look at the correlation of our chosen variables and see whether they would be of use later for our ideal model. 
+
+After creating informative visualisations, we created our first model consisting of different combinations of variables. In order to increase our adjusted R squared, we added new variables and removed insignificant variables (t-value below 2 and thus p value more than 5%). To compare all our models we used huxreg and also used VIF to confirm that the variables in our model are not multicorrelated. We finally decided on a model that includes review_scores_communication, review_scores_location, review_scores_value, cancellation_policy, security_deposit,  neighbourhood_simplified, latitude, host_response_time, host_is_superhost, bedrooms, accommodates, total_amenities, prop_type_simplified, number_of_reviews_ltm,  review_scores_rating, room_type. This model reaches 39% adjusted R-squared and therefore explains 39% of the variability in price_4_nights. 
+
+As the last step, we predicted the price for 2 people staying for 4 nights in Hong Kong along with the 95% prediction intervals. 
 
 
 The first step for our project is loading the essential packages.
@@ -658,7 +680,7 @@ Now we will explore adding further variables.
 
 We start our own exploration now. We first wonder if we can improve model 2.
 
-In the visualisations above we saw that the variables `bedrooms`, `beds`, `bathrooms`, `total_amenities` and `accommodates` have a moderate correlation with price. This logically makes sense since larger Airbnbs tend to accomodate more guests and cost a higher price. We will look at the effect of these variables on our model. We also wanted to add the `number_of_reviews_ltm` instead of `number_of_reviews` since we realized that it improves R squared.
+In the visualisations above we saw that the variables `bedrooms`, `beds`, `bathrooms`, `total_amenities` and `accommodates` have more than 10% correlation with price. This logically makes sense since larger Airbnbs tend to accommodate more guests and cost a higher price. We will look at the effect of these variables on our model. We also wanted to add the `number_of_reviews_ltm` instead of `number_of_reviews` since we realized that it improves R squared.
 
 ```{r}
 glimpse(main_data4) 
@@ -796,7 +818,7 @@ The addition of these variables vastly improves our adjusted R squared value to 
 
 Next, we would like to see the impact of adding `cancellation_policy` and `security_deposit` to the model. 
 
-```{r}
+```{r fig.width=15}
 glimpse(main_data4)
  
 model8 <- lm(log(price_4_nights) ~  cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
@@ -822,9 +844,9 @@ These new variables did not change our R Squared much, we observe that cancellat
 
 ### Model 9: Adding Review Types
 
-Lastly, we would like to try adding specific review scores to our model, although we know that they might be correlated.
+Lastly, we would like to try adding specific review scores to our model, although we know that they might be intercorrelated.
 
-```{r}
+```{r fig.width=15}
 glimpse(main_data4) 
 
 model9 <- lm(log(price_4_nights) ~ review_scores_rating +  review_scores_cleanliness + review_scores_checkin + review_scores_communication + review_scores_location + review_scores_value + cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
@@ -851,7 +873,7 @@ We take out the scores of accuracy, cleanliness, rating and checkin becase of th
 
 After we did our final adjustments, we get to the R squared of 38%. Although it is not a high rate, we can observe that our model does not suffer from collinearity and our variables are usually statistically significant with only a couple of them having larger than 5% p values. We decided to keep them since they are categorical and some of the other values in these variables have p values lower than 5%. 
 
-```{r}
+```{r fig.width=15}
  
 model10 <- lm(log(price_4_nights) ~ review_scores_communication + review_scores_location + review_scores_value + cancellation_policy + security_deposit +  neighbourhood_simplified + latitude + host_response_time + host_is_superhost + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews_ltm +  review_scores_rating + room_type, data= main_data4)
 
@@ -904,6 +926,8 @@ msummary(final_model)
 confint(final_model)
 ```
 
+# Predicting Price
+
 To predict the price for two people staying 4 nights in Hong Kong, we need to first create a data frame that contains their preferences and then feed it into our model. We have chosen two tourists who want to stay in an apartment, that has 2 bedrooms, 20 amenities, and a strict cancellation policy. The apartment is in hong_kong area and has 10 reviews in last twelve months, a rating of 90 and accommodates 3 people.
 
 ```{r}
@@ -934,4 +958,4 @@ paste("Upper PI for Price for two people staying four nights in Hong Kong is: ",
 
 
 ```
-After calculating the anti-log of the price that our model predicts, we find that the price comes out to be 2896.76 HKD with an upper prediction interval of 7728.41 HKD and lower prediction interval of 1085.62 HKD. The wide range in prediction interval of the predicted price is due to our model having an adjusted R2 of 39% which leaves room for uncertainty. 
+After calculating the anti-log of the price that our model predicts, we find that the price comes out to be 2896.76 HKD with an upper prediction interval of 7728.41 HKD and lower prediction interval of 1085.62 HKD. Our model predicts a price closer to the lower PI indicating that the price data is right skewed. The wide range in prediction interval of the predicted price is due to our model having an adjusted R2 of 39% which leaves room for uncertainty. 
