@@ -4,6 +4,10 @@ author: "Group 29"
 date: "10/18/2020"
 output: html_document
 ---
+# Executive Summary 
+
+
+The first step for our project is loading the essential packages.
 ```{r, loadinglibs}
 library(vroom)
 library(dplyr)
@@ -26,25 +30,26 @@ library(readr)
 library(kableExtra)
 ```
 
-# Executive Summary 
+# Exploratory Data Analysis (EDA)
 
 
 ## Loading Data
 
-First we are going to read the data directly from the URL:
+To begin with, we need to get data for AirBnB listings in Hong Kong. 
+we are going to read the data directly from the URL using vroom for higher speed,
+and clean the column names :
 ```{r}
 listings <- vroom::vroom("http://data.insideairbnb.com/china/hk/hong-kong/2020-06-15/data/listings.csv.gz", na=c("", "NA", "N/A"))%>%
-  clean_names()
+  clean_names() # clean column names
 ```
 
-
-# Exploratory Data Analysis (EDA)
 
 ## Looking at the raw values
 
 ### How many variables/columns? How many rows/observations?
 
-We have 106 variables and 11,187 observations.
+Firstly, we are looking at the raw data to get a basical understanding of it.
+We have 106 variables and 11,187 observations, and there are numerical,character, and date variables in the dataset.
 
 ```{r}
 glimpse(listings)
@@ -52,20 +57,90 @@ glimpse(listings)
 
 ## Computing summary statistics of the variables of interest
 
-1. 
+After the first glimpse it is useful to dive deeper and get the distribution of variables. 
+While there are a lot of them - 46 character, 38 numeric, 5 date and 17 logical -
+let's consider ones that are particularly interesting: 
+
+`minimum_nights`,`accommodates`, `number_of_reviews`, `bedrooms`, `beds`, `bathrooms`. 
+
+Display summary statistics for these variables using favstats from the mosaic package. 
+
+
+
 
 ```{r}
 skim(listings)%>%
   kable()%>%
   kable_styling()
+
+skim(listings)
 ```
 
-## Variable Selection 
-
-We selected the ones we found interesting:
+### Minimum number of nights 
+From histogram we saw that it is right skewed, and the median is 2, meaning
+that majority of property is for tourists. At the same time,
+there are a lot of long minimum night observations- that is property for long-term rent. 
 
 ```{r}
-interesting_data <- listings %>% 
+favstats(~minimum_nights, data= listings)
+```
+
+### Number of accommodates 
+The situation is similar to minimum number of nights: slightly right skewed data set. There are some 
+big accommodation  options that allow 16 people to stay.  
+```{r}
+favstats(~accommodates, data= listings)
+```
+### Number of number of reviews 
+The data for reviews number is heavily right skewed. From median it can be seen that
+most of the listing have very small number of reviews- just 2. 
+```{r}
+favstats(~number_of_reviews, data= listings)
+```
+### Bedrooms, beds, bathrooms
+The data for reviews number is heavily right skewed. From median it can be seen that
+most of the listing have very small number of reviews- just 2. 
+```{r}
+favstats(~bedrooms, data= listings)
+favstats(~beds, data= listings)
+favstats(~bathrooms, data= listings)
+```
+The most interesting observation is that there some really big "mansions" in the
+data set: houses with 11 bathrooms and 20 beds. All three variables are slightly right skewed. 
+
+## Data cleaning and transformation
+
+Before proceding to analysis we do following transformation of the main data set:
+
+* We selected the ones we found interesting
+* Change the price variables (price, cleaning_fee, extra_people, and security_deposit) to numeric variables, as they are now characters
+* Remove listings which have minimum_nights>4 or maximum_nights <= 4. These listings are either for long term rents not connected to tourism (not always but most likely) or two short options. Since the goal of the project is projecting the price for 4 nights they are irrelevant
+* Delete observations with 0 price to rent (most likely some listings with a need to 
+discuss the price by phone)
+* Delete observations not allowing for second person to stay
+* Delete listings without summaries or host response times 
+* Making values for security deposit and cleaning fee 0 if they are NA, as NA
+means in this case that there is no need for security deposit or cleaning is free
+* For `Property type` we find most popular types 7 in the data set. We then creating the simplified
+version of the variable by keeping the most popular ones and assigning the value "Other" to other observations. 
+`Cancelation type` is transformed to have 3 types. 
+`Neighbourhood type`, `Room type`, `Bed type` are checked to have less then 6 factors. 
+* Create `host_since_calculated` variable which reflects the number of years the host is a host
+* Convert the amenities variable to be a count of the number of amenities in a certain property, rather than comma separated values and store it to `total_amenities`
+* After talking to a person who lives in Hong Kong we create 3 new smaller groups of
+neighbourhoods: hong_kong, kowloon and new_territories. 
+* Finally calculate the cost for two people to  stay in an Hong Kong for 4 nights and store it in the variable `price_4_nights`.
+The price is calculated as sum of price per night, cleaning price and charge for the additional
+guest if such exists (otherwise it is 0). 
+
+
+In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
+
+
+After that wee need to filter the data
+
+```{r}
+interesting_data <- listings %>% # Select variables of interest 
   select(id, 
            listing_url, 
            summary, 
@@ -111,9 +186,7 @@ interesting_data <- listings %>%
            reviews_per_month)
 ```
 
-In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
 
-First, we must change the price variables (price, cleaning_fee, extra_people, and security_deposit) to numeric variables, as they are now characters.
 
 ## Data Wrangling 
 
