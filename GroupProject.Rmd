@@ -66,7 +66,7 @@ We selected the ones we found interesting:
 
 ```{r}
 interesting_data <- listings %>% 
-  select(c(1, 2, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, amenities, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, last_review, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
+  select(c(1, 2, summary, space, description, host_since, host_response_time, host_response_rate, host_is_superhost, host_listings_count, host_has_profile_pic, host_identity_verified, neighbourhood_cleansed, latitude, longitude, is_location_exact, property_type, room_type, accommodates, bathrooms, bedrooms, beds, bed_type, amenities, price, security_deposit, cleaning_fee, guests_included, extra_people, minimum_nights, maximum_nights, has_availability, number_of_reviews, number_of_reviews_ltm, last_review, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, cancellation_policy, reviews_per_month))
 ```
 
 In order to run models with our data, we need to modify some variables and create some new variables that we want to examine. 
@@ -85,7 +85,9 @@ main_data <- interesting_data %>%
   filter(minimum_nights <= 4, 
          maximum_nights >= 4,
          price > 0, 
-         accommodates >= 2, 
+         accommodates >= 2,
+         !is.na(summary),
+         !is.na(host_response_time)
          )
 
 # ci_price <- main_data %>%
@@ -101,7 +103,7 @@ main_data <- interesting_data %>%
 #              ci_high = mean_price + margin_of_error
 #   )
 # ci_price
-skim(interesting_data)
+
 skim(main_data)
 
 ```
@@ -226,16 +228,11 @@ main_data4<- main_data4 %>%
 
 ```{r}
 
-# Based on an interview with a local, we then assigned each neighbourhood a grade corresponding to quality of life 
+# Based on an interview with a local, we then assigned each neighbourhood to an area
 
-# vector for living quality
-
-Best <-c("Central & Western","Kowloon City","Islands")
-Better <-c("Southern","Tsuen Wan","Wan Chai")
-Good <-c("Sai Kung", "Tai Po", "Tuen Mun")
-Standard <-c("Sham Shui Po","Kwai Tsing", "Kwun Tong")
-Worse <- c("Sha Tin", "Eastern","Yau Tsim Mong")
-Worst <- c("Yuen Long", "Wong Tai Sin","North")
+hong_kong <-c("Central & Western","Wan Chai","Southern","Eastern")
+kowloon <-c("Kowloon City","Yau Tsim Mong","Sham Shui Po","Wong Tai Sin", "Kwun Tong")
+new_territories <-c("Tsuen Wan","Wan Chai","Sai Kung", "Tai Po", "Tuen Mun","Kwai Tsing","Sha Tin","Yuen Long","North","Islands")
 
 ```
 
@@ -244,22 +241,37 @@ Worst <- c("Yuen Long", "Wong Tai Sin","North")
 # Assigning neighbourhood simplified
 
 main_data4 <- main_data4 %>% 
-  mutate(neighbourhood_simplified = case_when(neighbourhood_cleansed %in% Best ~ "best",
-                                              neighbourhood_cleansed %in% Better ~ "better",
-                                              neighbourhood_cleansed %in% Good ~ "good",
-                                              neighbourhood_cleansed %in% Standard ~ "standard",
-                                              neighbourhood_cleansed %in% Worse ~ "worse",
-                                              neighbourhood_cleansed %in% Worst ~ "worst",
+  mutate(neighbourhood_simplified = case_when(neighbourhood_cleansed %in% hong_kong ~ "hong_kong",
+                                              neighbourhood_cleansed %in% kowloon ~ "kowloon",
+                                              neighbourhood_cleansed %in% new_territories ~ "new_territories",
                                               ))
 
 
 ```
 
+Creating variable for the size of the apartment
+```{r}
+#creating the A/C variable
+main_data4 <- main_data4 %>% 
+  mutate(is_it_big_sum = str_detect(summary,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
+          is_it_big_spa = str_detect(space,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
+          is_it_big_desc = str_detect(description,c("large", "big" , "Big" , "spacious", "bright", "Spacious", "Large", "Bright", "refurbished","Refurbished", "Renovated", "renovated")),
+          is_it_big = is_it_big_sum | is_it_big_spa | is_it_big_desc
+           )
+         
+proportions<- main_data4 %>% 
+  group_by(is_it_big) %>% 
+  summarise(count=n()) %>% 
+  mutate(proportion=count/sum(count))
+proportions%>%
+    kable()%>%
+  kable_styling()
+```
 
 ## Creating price_4_nights 
 
 ```{r}
-main_data4 <- main_data4%>%
+main_data4 <- main_data4 %>%
   filter(guests_included<=2)%>% 
   mutate(
     extra_charge_pp= case_when(guests_included==2 ~ 0, guests_included ==1 ~ extra_people),
@@ -335,6 +347,8 @@ main_data4%>%
   ggtitle("Total Number of Reviews") +
   coord_cartesian(xlim = c(0, 220)) +
   theme_minimal()
+
+skim(main_data4)
 ```
 
 
@@ -596,12 +610,12 @@ autoplot(model9)
 
 ```
 
-### Model 10: ^^
+### Model 10: Adding space
 
 ```{r}
 
 
-model10 <- lm(log(price_4_nights) ~ review_scores_communication +  neighbourhood_simplified + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + number_of_reviews + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
+model10 <- lm(log(price_4_nights) ~  is_it_big  + review_scores_communication +  neighbourhood_simplified + is_location_exact + cancellation_policy + host_response_time +  host_is_superhost + host_since_calculated + security_deposit + bedrooms + accommodates + total_amenities + prop_type_simplified + log(number_of_reviews) + number_of_reviews_ltm + review_scores_rating + room_type, data= main_data4)
 
 model10 %>% 
   broom::tidy(conf.int=TRUE)%>%
