@@ -88,8 +88,6 @@ let's consider ones that are particularly interesting:
 Display summary statistics for these variables using favstats from the mosaic package. 
 
 
-
-
 ```{r}
 skim(listings)%>%
   kable()%>%
@@ -209,10 +207,10 @@ interesting_data <- listings %>% # Select variables of interest
 ```
 
 
-
 ## Data Wrangling 
 
 ```{r}
+
 main_data <- interesting_data %>%
   mutate(host_response_rate = parse_number(host_response_rate),
          price = parse_number(price),
@@ -391,26 +389,12 @@ main_data4 <- main_data4 %>%
   )
 ```
 
+## Visualizing the distribution of the variables of interest
 
-## Computing summary statistics and visualizing the distribution of the variables of interest
-
-
-```{r, skim_data}
-skimr::skim(listings)
-#using favstats from the mosaic package to display summary stats for some variables of interest
-favstats(~bedrooms, data= main_data4)
-favstats(~bathrooms, data= main_data4)
-favstats(~beds, data= main_data4)
-favstats(~accommodates, data= main_data4)
-favstats(~number_of_reviews, data= main_data4)
-favstats(~host_since_calculated, data= main_data4)
-```
-
-## Visualizing the distribution of price_4_nights
-
-### Price for 4 Nights
+### Visualizing the distribution of price_4_nights
 
 ```{r, fig1}
+
 #density plot price_4_nights
 ggplot(data=main_data4, aes(x=price_4_nights)) +
   geom_density(fill = "blue", alpha = 0.3) +
